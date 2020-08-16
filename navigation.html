@@ -51,7 +51,8 @@
             });
 
             goal_listener.subscribe(function (m) {
-                document.getElementById("now_goal_x").placeholder = m.pose.position.xoFixed(3);
+                console.log(m.pose.position)
+                document.getElementById("now_goal_x").placeholder = m.pose.position.x.toFixed(3);
                 document.getElementById("now_goal_y").placeholder = m.pose.position.y.toFixed(3);
             });
 
@@ -75,8 +76,8 @@
                 },
                 "pose": {
                     "position": {
-                      "x": goal_x,
-                      "y": goal_y,
+                      "x": parseFloat(goal_x),
+                      "y": parseFloat(goal_y),
                       "z": 0
                     },
                     "orientation": {
