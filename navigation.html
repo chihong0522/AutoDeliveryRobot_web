@@ -15,8 +15,16 @@
     <script src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js" type="text/javascript"></script>
     <script src="https://static.robotwebtools.org/roslibjs/current/roslib.js"></script>
     <script src="http://static.robotwebtools.org/ros2djs/current/ros2d.js"></script>
-
     <script src="nav2djs/build/nav2d.js"></script>
+
+    <!--    Bootstrap table update-->
+<!--    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>-->
+<!--    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>-->
+<!--    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.8.1/bootstrap-table.js"></script>-->
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.8.1/bootstrap-table.css">-->
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.css">
+    <script src="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.js"></script>
+
 
     <script>
         /**
@@ -26,6 +34,8 @@
         var ros = new ROSLIB.Ros({
             url: 'ws://localhost:9090'
         });
+
+        localStorage.setItem('move_base_goal',JSON.stringify({"x":null,"y":null}))
 
         function init() {
             // Create the main viewer.
@@ -46,15 +56,20 @@
 
             var goal_listener = new ROSLIB.Topic({
                 ros: ros,
-                name: '/move_base/current_goal',
-                messageType: 'geometry_msgs/PoseStamped'
+                name: '/move_base/goal',
+                messageType: 'move_base_msgs/MoveBaseActionGoal'
             });
 
             goal_listener.subscribe(function (m) {
-                console.log(m.pose.position)
-                document.getElementById("now_goal_x").placeholder = m.pose.position.x.toFixed(3);
-                document.getElementById("now_goal_y").placeholder = m.pose.position.y.toFixed(3);
+
+                document.getElementById("now_goal_x").placeholder = m.goal.target_pose.pose.position.x.toFixed(3);
+                document.getElementById("now_goal_y").placeholder = m.goal.target_pose.pose.position.y.toFixed(3);
+
+                var goal = {"x":m.goal.target_pose.pose.position.x,"y":m.goal.target_pose.pose.position.y}
+                localStorage.setItem('move_base_goal',JSON.stringify(goal))
             });
+
+            load()
 
         }
 
@@ -71,7 +86,6 @@
             console.log("Set goal >>> ",goal_x,goal_y)
 
             var new_goal = new ROSLIB.Message({
-
                 "goal":{
                     "target_pose":{
                         "header": {
@@ -96,6 +110,71 @@
 
             goal_setting.publish(new_goal)
             console.log("send to goal >>> ", new_goal)
+        }
+
+        function save_nav_goal(){
+            var nav_place_name= document.getElementById('nav_place_name').value
+            if(nav_place_name.length==0){
+                alert("Plz enter place name")
+                return
+            }
+            var nav_point = {
+                "place": nav_place_name ,
+                "move_base_goal": JSON.parse(localStorage.getItem("move_base_goal"))
+            }
+
+            if(!localStorage.getItem("nav_place")){
+                localStorage.setItem('nav_place',JSON.stringify([]))
+            }
+
+            var saved_place_list = JSON.parse(localStorage.getItem('nav_place'))
+
+            const repeated_place = saved_place_list.find(function(item, index, array){
+              return item.place === nav_point.place
+            });
+
+            if (repeated_place){
+                alert("This Place name already exists!")
+                return
+            }else if(nav_point.move_base_goal.x==null || nav_point.move_base_goal.y==null){
+                alert("Plz set nav point first!")
+                return
+            }else{
+                saved_place_list.push(nav_point)
+                localStorage.setItem("nav_place",JSON.stringify(saved_place_list))
+            }
+
+            console.log("saved_place_list >>> ",saved_place_list)
+            load()
+        }
+
+        function load(){
+            var data = []
+
+            if(!localStorage.getItem("nav_place")){
+                alert("No saved place!")
+                return
+            }
+            var nav_place = JSON.parse(localStorage.getItem("nav_place"))
+            nav_place.forEach(item=>{
+                data.push(
+                    {
+                        "place":item.place,
+                        "x":item.move_base_goal.x.toFixed(3),
+                        "y":item.move_base_goal.y.toFixed(3)
+                    }
+                )
+            })
+
+            console.log(data)
+            $('#table').bootstrapTable({
+                data: data,
+                columns:[ //欄位設定
+                    {field:'place', title:'place', align:'center', visible:true},
+                    {field:'x', title:'x', align:'center', visible:true},
+                    {field:'y', title:'y', align:'center', visible:true}
+                  ],
+            });
         }
     </script>
 </head>
@@ -143,11 +222,28 @@
                         </div>
 
                     </div>
+                    <div >
+                        <h4>Save navigation point</h4>
+                        <div class="input-group">
+                            <input type="text" aria-label="x" class="form-control" id="nav_place_name">
+                            <button class="btn btn-primary" onclick="save_nav_goal()">Save</button>
+                        </div>
+                    </div>
 
                 </div>
             </div>
         </div>
-        <div class="column"></div>
+        <div class="column">
+            <div class="card">
+<!--                <button class="btn-primary btn" onclick="load();" >Load Table</button>-->
+                div class="container">
+                    <h4>Saved Goal</h4>
+                    <table class="table" id="table" />
+                </div>
+            </div>
+
+        </div>
+        </div>
     </div>
 
 </body>
