@@ -61,8 +61,8 @@
         function send_to_goal(){
             var goal_setting = new ROSLIB.Topic({
                 ros: ros,
-                name: '/move_base/current_goal',
-                messageType: 'geometry_msgs/PoseStamped'
+                name: '/move_base/goal',
+                messageType: 'move_base_msgs/MoveBaseActionGoal'
             });
 
             var goal_x = document.getElementById('goal_x').value
@@ -71,22 +71,27 @@
             console.log("Set goal >>> ",goal_x,goal_y)
 
             var new_goal = new ROSLIB.Message({
-                "header": {
-                    "frame_id": "map"
-                },
-                "pose": {
-                    "position": {
-                      "x": parseFloat(goal_x),
-                      "y": parseFloat(goal_y),
-                      "z": 0
-                    },
-                    "orientation": {
-                      "x": 0,
-                      "y": 0,
-                      "z": 0,
-                      "w": 0
+
+                "goal":{
+                    "target_pose":{
+                        "header": {
+                            "frame_id": "map"
+                        },
+                        "pose": {
+                            "position": {
+                              "x": parseFloat(goal_x),
+                              "y": parseFloat(goal_y),
+                              "z": 0
+                            },
+                            "orientation": {
+                              "x": 0,
+                              "y": 0,
+                              "z": -0.193664181026,
+                              "w": 0.981067879908
+                            }
+                          }
                     }
-                  }
+                }
             })
 
             goal_setting.publish(new_goal)
