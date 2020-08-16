@@ -1,0 +1,204 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<!--    Bootstrap-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <meta charset="utf-8"/>
+    <script src="https://static.robotwebtools.org/EaselJS/current/easeljs.js"></script>
+    <script src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"
+            type="text/javascript"></script>
+    <script src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js" type="text/javascript"></script>
+    <script src="https://static.robotwebtools.org/roslibjs/current/roslib.js"></script>
+    <script src="http://static.robotwebtools.org/ros2djs/current/ros2d.js"></script>
+
+    <script src="nav2djs/build/nav2d.js"></script>
+
+    <script>
+        /**
+         * Setup all visualization elements when the page is loaded.
+         */
+        // Connect to ROS.
+        var ros = new ROSLIB.Ros({
+            url: 'ws://localhost:9090'
+        });
+
+        function init() {
+            // Create the main viewer.
+            var viewer = new ROS2D.Viewer({
+                divID: 'nav',
+                width: 350,
+                height: 400
+            });
+
+            // Setup the nav client.
+            var nav = NAV2D.OccupancyGridClientNav({
+                ros: ros,
+                rootObject: viewer.scene,
+                viewer: viewer,
+                serverName: '/move_base', //change here cuz we are not using pr2
+                continuous:true
+            });
+
+            var goal_listener = new ROSLIB.Topic({
+                ros: ros,
+                name: '/move_base/current_goal',
+                messageType: 'geometry_msgs/PoseStamped'
+            });
+
+            goal_listener.subscribe(function (m) {
+                document.getElementById("now_goal_x").placeholder = m.pose.position.xoFixed(3);
+                document.getElementById("now_goal_y").placeholder = m.pose.position.y.toFixed(3);
+            });
+
+        }
+
+        function send_to_goal(){
+            var goal_setting = new ROSLIB.Topic({
+                ros: ros,
+                name: '/move_base/current_goal',
+                messageType: 'geometry_msgs/PoseStamped'
+            });
+
+            var goal_x = document.getElementById('goal_x').value
+            var goal_y = document.getElementById('goal_y').value
+
+            console.log("Set goal >>> ",goal_x,goal_y)
+
+            var new_goal = new ROSLIB.Message({
+                "header": {
+                    "frame_id": "map"
+                },
+                "pose": {
+                    "position": {
+                      "x": goal_x,
+                      "y": goal_y,
+                      "z": 0
+                    },
+                    "orientation": {
+                      "x": 0,
+                      "y": 0,
+                      "z": 0,
+                      "w": 0
+                    }
+                  }
+            })
+
+            goal_setting.publish(new_goal)
+            console.log("send to goal >>> ", new_goal)
+        }
+    </script>
+</head>
+
+<body onload="init()">
+    <h2>Autonomous Delivery System</h2>
+    <div class="topnav">
+      <a  href="home.html">Home</a>
+      <a href="user.html">User</a>
+      <a  href="map.html">Map</a>
+      <a class="active" href="navigation.html">Navigation</a>
+    </div>
+    <div class="row">
+        <div class="column">
+            <div class="card">
+                <div class="container">
+                    <h3>Live Robot Location</h3>
+                    <div id="nav"></div>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="card">
+                <div class="container">
+                    <h4>Current goal</h4>
+                    <div>
+                        <div class="input-group">
+                          <div class="input-group-prepend">
+                            <span class="input-group-text">X,Y</span>
+                          </div>
+                          <input  type="number" aria-label="x" class="form-control" id="now_goal_x">
+                          <input  type="number" aria-label="y" class="form-control" id="now_goal_y">
+                        </div>
+
+                    </div>
+                    <h4>Goal setting</h4>
+                    <div>
+                        <div class="input-group">
+                          <div class="input-group-prepend">
+                            <span class="input-group-text">X,Y</span>
+                          </div>
+                          <input type="number" aria-label="x" class="form-control" id="goal_x">
+                          <input type="number" aria-label="y" class="form-control" id="goal_y">
+                            <button class="btn btn-primary" onclick="send_to_goal()">Send</button>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="column"></div>
+    </div>
+
+</body>
+<style>
+    /* Add a black background color to the top navigation */
+    .topnav {
+      background-color: #333;
+      overflow: hidden;
+    }
+
+    /* Style the links inside the navigation bar */
+    .topnav a {
+      float: left;
+      color: #f2f2f2;
+      text-align: center;
+      padding: 14px 16px;
+      text-decoration: none;
+      font-size: 17px;
+    }
+
+    /* Change the color of links on hover */
+    .topnav a:hover {
+      background-color: #ddd;
+      color: black;
+    }
+
+    /* Add a color to the active/current link */
+    .topnav a.active {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .card {
+      /* Add shadows to create the "card" effect */
+      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+      transition: 0.3s;
+        border-radius: 5px;
+    }
+
+    /* On mouse-over, add a deeper shadow */
+    .card:hover {
+      box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+    }
+
+    /* Add some padding inside the card container */
+    .container {
+      padding: 2px 16px;
+    }
+    .column {
+  float: left;
+  width: 33.33%;
+    }
+
+    /* Clear floats after the columns */
+    .row:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+</style>
+</html>
