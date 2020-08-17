@@ -65,7 +65,10 @@
                 document.getElementById("now_goal_x").placeholder = m.goal.target_pose.pose.position.x.toFixed(3);
                 document.getElementById("now_goal_y").placeholder = m.goal.target_pose.pose.position.y.toFixed(3);
 
-                var goal = {"x":m.goal.target_pose.pose.position.x,"y":m.goal.target_pose.pose.position.y}
+                var goal = {
+                    "x":m.goal.target_pose.pose.position.x,
+                    "y":m.goal.target_pose.pose.position.y
+                }
                 localStorage.setItem('move_base_goal',JSON.stringify(goal))
             });
 
@@ -180,7 +183,7 @@
 </head>
 
 <body onload="init()">
-    <h2>Autonomous Delivery System</h2>
+    <h3>Autonomous Delivery System</h3>
     <div class="topnav">
       <a  href="home.html">Home</a>
       <a href="user.html">User</a>
@@ -191,7 +194,7 @@
         <div class="column">
             <div class="card">
                 <div class="container">
-                    <h3>Live Robot Location</h3>
+                    <h4>Live Robot Location</h4>
                     <div id="nav"></div>
                 </div>
             </div>
@@ -236,7 +239,7 @@
         <div class="column">
             <div class="card">
 <!--                <button class="btn-primary btn" onclick="load();" >Load Table</button>-->
-                div class="container">
+                <div class="container">
                     <h4>Saved Goal</h4>
                     <table class="table" id="table" />
                 </div>
